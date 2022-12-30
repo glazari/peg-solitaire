@@ -16,18 +16,7 @@ pub fn print_board(b: Board) {
 
 impl Board {
     fn to_str(&self) -> String {
-        let mut b_str = String::new();
-        for i in 0..7 {
-            for j in 0..7 {
-                match self.board[i][j] {
-                    NotPartOfBoard => b_str.push_str(" "),
-                    Empty => b_str.push_str("-"),
-                    Occupied => b_str.push_str("*"),
-                }
-            }
-            b_str.push_str("\n");
-        }
-        b_str
+        self.serialize()
     }
 }
 
@@ -37,7 +26,8 @@ mod tests {
     #[test]
     fn full_board_str() {
         let full_board = Board::new();
-        let expected = "  ***  
+        let expected = "
+  ***  
   ***  
 *******
 ***-***
@@ -50,7 +40,8 @@ mod tests {
     #[test]
     fn non_full_board() {
         let full_board = Board::new();
-        let expected = "  ***  
+        let expected = "
+  ***  
   ***  
 *******
 ***-***
