@@ -10,13 +10,15 @@
  * Board is a 7x7 matrix
  * Some of the fields are not used.
  */
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq, Clone)]
 pub struct Board {
-    // TODO: pub(create) is used to test the to_str function, there is probably a a better way of
-    // doing this
-    pub(crate) board: [[Space; 7]; 7],
+    board: [[Space; 7]; 7],
 }
 
+use crate::error::Error::*;
+use crate::error::{Error, INVALID_MOVE_MESSAGE};
+use crate::position::Position;
+use std::fmt;
 use Space::*;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -26,69 +28,43 @@ pub(crate) enum Space {
     NotPartOfBoard,
 }
 
-/// Describes a position on the board.
-type Position = (u32, u32);
+impl fmt::Debug for Board {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Board Start: {} Board End", self.serialize())
+    }
+}
 
 /*
  * Board Game methods
  *
  */
 impl Board {
-    pub fn move_piece(&self, from: Position, to: Position) -> Board {
-        Board::new()
-    }
-}
-
-/// Serialize and deserialize Board
-impl Board {
-    pub(crate) fn serialize(&self) -> String {
-        let mut b_str = String::new();
-        b_str.push_str("\n");
-        for i in 0..7 {
-            for j in 0..7 {
-                match self.board[i][j] {
-                    NotPartOfBoard => b_str.push_str(" "),
-                    Empty => b_str.push_str("-"),
-                    Occupied => b_str.push_str("*"),
-                }
-            }
-            b_str.push_str("\n");
+    pub fn move_piece(&self, from: Position, to: Position) -> Result<Board, Error> {
+        let diff = to - from;
+        if diff.0 != 0 && diff.1 != 0 {
+            return Err(UnalinedMove(INVALID_MOVE_MESSAGE));
         }
-        b_str
-    }
-    fn deserialize(board_str: &str) -> Board {
-        let mut board = Board::new();
-        let (mut i, mut j) = (0, 0);
-        for n in 1..board_str.len() {
-            let char = board_str.chars().nth(n);
-            match char {
-                None => return board,
-                Some(char) => match char {
-                    ' ' => {
-                        board.board[i][j] = NotPartOfBoard;
-                        i += 1;
-                    }
-                    '-' => {
-                        board.board[i][j] = Empty;
-                        i += 1;
-                    }
-                    '*' => {
-                        board.board[i][j] = Occupied;
-                        i += 1;
-                    }
-                    '\n' => {
-                        i = 0;
-                        j += 1;
-                    }
-                    _ => panic!("Invalid char '{}'", char),
-                },
-            }
-            if char.is_none() {
-                return board;
-            }
+        if diff.0.abs() + diff.1.abs() != 2 {
+            return Err(DistanceNot2Move(INVALID_MOVE_MESSAGE));
         }
 
-        board
+        let middle: Position = from + (diff.0 / 2, diff.1 / 2);
+        if self.at(from) != Occupied || self.at(to) != Empty || self.at(middle) != Occupied {
+            return Err(SpacesInvolvedNotCorrect(INVALID_MOVE_MESSAGE));
+        }
+        let mut new_board = (*self).clone();
+        new_board.set(from, Empty);
+        new_board.set(to, Occupied);
+        new_board.set(middle, Empty);
+        Ok(new_board)
+    }
+
+    pub(crate) fn at(&self, pos: Position) -> Space {
+        self.board[pos.y][pos.x]
+    }
+
+    pub(crate) fn set(&mut self, pos: Position, val: Space) {
+        self.board[pos.y][pos.x] = val;
     }
 }
 
@@ -113,49 +89,154 @@ impl Board {
 
         b
     }
+
+    pub(crate) fn from_array(board: [[Space; 7]; 7]) -> Board {
+        Board { board }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn full_board_serialize() {
+    fn test_sucessfull_move() {
         let full_board = Board::new();
-        let expected = "
-  ***  
-  ***  
-*******
-***-***
-*******
-  ***  
-  ***  
-";
-        assert_eq!(expected, full_board.serialize());
-        assert_eq!(full_board, Board::deserialize(expected));
-    }
-    #[test]
-    fn non_full_board_serialize() {
-        #[rustfmt::skip]
-        let non_full_board = Board {
-            board: [
-                [NotPartOfBoard,  NotPartOfBoard, Occupied, Occupied, Occupied, NotPartOfBoard,  NotPartOfBoard],
-                [NotPartOfBoard,  NotPartOfBoard, Occupied, Empty,    Occupied, NotPartOfBoard,  NotPartOfBoard],
-                [Occupied,        Empty,          Empty,    Occupied, Occupied, Occupied,        Occupied],
-                [Occupied,        Occupied,       Occupied, Occupied, Occupied, Occupied,        Occupied],
-                [Occupied,        Occupied,       Occupied, Occupied, Occupied, Occupied,        Occupied],
-                [NotPartOfBoard,  NotPartOfBoard, Occupied, Occupied, Occupied, NotPartOfBoard,  NotPartOfBoard],
-                [NotPartOfBoard,  NotPartOfBoard, Occupied, Occupied, Occupied, NotPartOfBoard,  NotPartOfBoard],
-            ]
-        };
+        let (from, to) = (Position { x: 3, y: 1 }, Position { x: 3, y: 3 });
+        // move from 3,1 to 3, 3
         let expected = "
   ***  
   *-*  
-*--****
+***-***
 *******
 *******
   ***  
   ***  
 ";
-        assert_eq!(expected, non_full_board.serialize());
+        let got = full_board
+            .move_piece(from, to)
+            .expect("valid move")
+            .serialize();
+        assert_eq!(expected, got, "\nExpected: {}\nGot: {}", expected, got);
+    }
+
+    #[test]
+    fn failed_move_unalined() {
+        let full_board = Board::new();
+        let (from, to) = (Position { x: 3, y: 2 }, Position { x: 4, y: 5 });
+
+        assert_eq!(
+            Err(UnalinedMove(INVALID_MOVE_MESSAGE)),
+            full_board.move_piece(from, to)
+        );
+    }
+
+    #[test]
+    fn failed_move_distance_more_than_two() {
+        let full_board = Board::new();
+        let (from, to) = (Position { x: 3, y: 2 }, Position { x: 3, y: 5 });
+
+        assert_eq!(
+            Err(DistanceNot2Move(INVALID_MOVE_MESSAGE)),
+            full_board.move_piece(from, to)
+        );
+    }
+
+    #[test]
+    fn failed_move_distance_less_than_two() {
+        let full_board = Board::new();
+        let (from, to) = (Position { x: 3, y: 2 }, Position { x: 3, y: 3 });
+
+        assert_eq!(
+            Err(DistanceNot2Move(INVALID_MOVE_MESSAGE)),
+            full_board.move_piece(from, to)
+        );
+    }
+
+    #[test]
+    /// Initial versions had x and y flipped and initial tests were
+    /// all simetric relative to this flip, so this tests assures
+    /// they are not flipped.
+    fn test_x_y_coordinates() {
+        let board = Board::deserialize(
+            "
+  ---  
+  ---  
+------*
+-------
+-*-----
+  ---  
+  ---  
+",
+        );
+
+        assert_eq!(Occupied, board.at(Position { x: 6, y: 2 }));
+        assert_eq!(Empty, board.at(Position { x: 2, y: 6 }));
+        assert_eq!(Occupied, board.at(Position { x: 1, y: 4 }));
+        assert_eq!(Empty, board.at(Position { x: 4, y: 1 }));
+        assert_eq!(NotPartOfBoard, board.at(Position { x: 0, y: 0 }));
+    }
+
+    #[test]
+    fn failed_move_initial_position_no_piece() {
+        let board = Board::deserialize(
+            "
+  ---  
+  ---  
+-------
+----*--
+----*--
+  ---  
+  ---  
+",
+        );
+        let (from, to) = (Position { x: 4, y: 2 }, Position { x: 4, y: 4 });
+        let p = Position { x: 0, y: 2 };
+
+        assert_eq!(
+            Err(SpacesInvolvedNotCorrect(INVALID_MOVE_MESSAGE)),
+            board.move_piece(from, to)
+        );
+    }
+
+    #[test]
+    fn failed_move_end_position_not_empty() {
+        let board = Board::deserialize(
+            "
+  ---  
+  ---  
+----*--
+----*--
+----*--
+  ---  
+  ---  
+",
+        );
+        let (from, to) = (Position { x: 4, y: 4 }, Position { x: 4, y: 2 });
+
+        assert_eq!(
+            Err(SpacesInvolvedNotCorrect(INVALID_MOVE_MESSAGE)),
+            board.move_piece(from, to)
+        );
+    }
+
+    #[test]
+    fn failed_move_skip_position_not_occupied() {
+        let board = Board::deserialize(
+            "
+  ---  
+  ---  
+-------
+-------
+----*--
+  ---  
+  ---  
+",
+        );
+        let (from, to) = (Position { x: 4, y: 4 }, Position { x: 4, y: 2 });
+
+        assert_eq!(
+            Err(SpacesInvolvedNotCorrect(INVALID_MOVE_MESSAGE)),
+            board.move_piece(from, to)
+        );
     }
 }

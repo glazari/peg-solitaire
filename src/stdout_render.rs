@@ -7,10 +7,9 @@
 //! a GUI representation of it.
 
 use crate::board::Board;
-use crate::board::Space::*;
 
 /// this is a comment about the print function
-pub fn print_board(b: Board) {
+pub fn print_board(b: &Board) {
     println!("{}", b.to_str())
 }
 
