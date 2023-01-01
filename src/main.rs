@@ -1,6 +1,8 @@
 mod board;
 mod board_serde;
 mod error;
+mod find_moves;
+mod move_struct;
 mod position;
 mod stdout_render;
 

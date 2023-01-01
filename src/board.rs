@@ -17,6 +17,7 @@ pub struct Board {
 
 use crate::error::Error::*;
 use crate::error::{Error, INVALID_MOVE_MESSAGE};
+use crate::move_struct::Move;
 use crate::position::Position;
 use std::fmt;
 use Space::*;
@@ -40,6 +41,18 @@ impl fmt::Debug for Board {
  */
 impl Board {
     pub fn move_piece(&self, from: Position, to: Position) -> Result<Board, Error> {
+        let middle = self.valid_move(Move { from, to })?;
+        let mut new_board = (*self).clone();
+        new_board.set(from, Empty);
+        new_board.set(to, Occupied);
+        new_board.set(middle, Empty);
+        
+        Ok(new_board)
+    }
+
+    /// returns the middle position if valid
+    pub(crate) fn valid_move(&self, movement: Move) -> Result<Position, Error> {
+        let (to, from) = (movement.to, movement.from);
         let diff = to - from;
         if diff.0 != 0 && diff.1 != 0 {
             return Err(UnalinedMove(INVALID_MOVE_MESSAGE));
@@ -52,11 +65,8 @@ impl Board {
         if self.at(from) != Occupied || self.at(to) != Empty || self.at(middle) != Occupied {
             return Err(SpacesInvolvedNotCorrect(INVALID_MOVE_MESSAGE));
         }
-        let mut new_board = (*self).clone();
-        new_board.set(from, Empty);
-        new_board.set(to, Occupied);
-        new_board.set(middle, Empty);
-        Ok(new_board)
+
+        Ok(middle)
     }
 
     pub(crate) fn at(&self, pos: Position) -> Space {
@@ -190,8 +200,6 @@ mod tests {
 ",
         );
         let (from, to) = (Position { x: 4, y: 2 }, Position { x: 4, y: 4 });
-        let p = Position { x: 0, y: 2 };
-
         assert_eq!(
             Err(SpacesInvolvedNotCorrect(INVALID_MOVE_MESSAGE)),
             board.move_piece(from, to)

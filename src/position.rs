@@ -5,7 +5,7 @@
 use std::ops::{Add, Sub};
 
 /// Describes a position on the board.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
