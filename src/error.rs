@@ -3,11 +3,14 @@
 //! This defines the error types that are used in all the Result functions
 //! in the crate.
 
+use crate::board::Board;
+use crate::move_struct::Move;
+
 #[derive(Debug, PartialEq)]
 pub enum Error<'a> {
-    UnalinedMove(&'a str),
-    DistanceNot2Move(&'a str),
-    SpacesInvolvedNotCorrect(&'a str),
+    UnalinedMove(&'a str, Board, Move),
+    DistanceNot2Move(&'a str, Board, Move),
+    SpacesInvolvedNotCorrect(&'a str, Board, Move),
 }
 
 pub const INVALID_MOVE_MESSAGE: &str = "Invalid Move. Valid Moves requre the following conditions:

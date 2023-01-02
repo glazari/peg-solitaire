@@ -40,7 +40,7 @@ impl Board {
         neighbors
     }
 
-    fn find_pieces(&self) -> Vec<Position> {
+    pub(crate) fn find_pieces(&self) -> Vec<Position> {
         let mut pos = vec![];
         for y in 0..7 {
             for x in 0..7 {
@@ -83,6 +83,31 @@ mod tests {
                 to: Position { x: 4, y: 5 },
             },
         ];
+
+        let mut got = board.find_moves();
+
+        // the order does not matter
+        expected.sort();
+        got.sort();
+
+        assert_eq!(expected, got)
+    }
+
+    #[test]
+    fn one_piece_move_list() {
+        let board = Board::deserialize(
+            "
+  ---  
+  ---  
+-------
+-------
+-------
+  --*  
+  ---  
+",
+        );
+
+        let mut expected: Vec<Move> = vec![];
 
         let mut got = board.find_moves();
 

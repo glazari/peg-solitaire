@@ -46,7 +46,7 @@ impl Board {
         new_board.set(from, Empty);
         new_board.set(to, Occupied);
         new_board.set(middle, Empty);
-        
+
         Ok(new_board)
     }
 
@@ -55,15 +55,23 @@ impl Board {
         let (to, from) = (movement.to, movement.from);
         let diff = to - from;
         if diff.0 != 0 && diff.1 != 0 {
-            return Err(UnalinedMove(INVALID_MOVE_MESSAGE));
+            return Err(UnalinedMove(INVALID_MOVE_MESSAGE, self.clone(), movement));
         }
         if diff.0.abs() + diff.1.abs() != 2 {
-            return Err(DistanceNot2Move(INVALID_MOVE_MESSAGE));
+            return Err(DistanceNot2Move(
+                INVALID_MOVE_MESSAGE,
+                self.clone(),
+                movement,
+            ));
         }
 
         let middle: Position = from + (diff.0 / 2, diff.1 / 2);
         if self.at(from) != Occupied || self.at(to) != Empty || self.at(middle) != Occupied {
-            return Err(SpacesInvolvedNotCorrect(INVALID_MOVE_MESSAGE));
+            return Err(SpacesInvolvedNotCorrect(
+                INVALID_MOVE_MESSAGE,
+                self.clone(),
+                movement,
+            ));
         }
 
         Ok(middle)
@@ -135,7 +143,11 @@ mod tests {
         let (from, to) = (Position { x: 3, y: 2 }, Position { x: 4, y: 5 });
 
         assert_eq!(
-            Err(UnalinedMove(INVALID_MOVE_MESSAGE)),
+            Err(UnalinedMove(
+                INVALID_MOVE_MESSAGE,
+                full_board.clone(),
+                Move { from, to }
+            )),
             full_board.move_piece(from, to)
         );
     }
@@ -146,7 +158,11 @@ mod tests {
         let (from, to) = (Position { x: 3, y: 2 }, Position { x: 3, y: 5 });
 
         assert_eq!(
-            Err(DistanceNot2Move(INVALID_MOVE_MESSAGE)),
+            Err(DistanceNot2Move(
+                INVALID_MOVE_MESSAGE,
+                full_board.clone(),
+                Move { from, to }
+            )),
             full_board.move_piece(from, to)
         );
     }
@@ -157,7 +173,11 @@ mod tests {
         let (from, to) = (Position { x: 3, y: 2 }, Position { x: 3, y: 3 });
 
         assert_eq!(
-            Err(DistanceNot2Move(INVALID_MOVE_MESSAGE)),
+            Err(DistanceNot2Move(
+                INVALID_MOVE_MESSAGE,
+                full_board.clone(),
+                Move { from, to }
+            )),
             full_board.move_piece(from, to)
         );
     }
@@ -201,7 +221,11 @@ mod tests {
         );
         let (from, to) = (Position { x: 4, y: 2 }, Position { x: 4, y: 4 });
         assert_eq!(
-            Err(SpacesInvolvedNotCorrect(INVALID_MOVE_MESSAGE)),
+            Err(SpacesInvolvedNotCorrect(
+                INVALID_MOVE_MESSAGE,
+                board.clone(),
+                Move { from, to }
+            )),
             board.move_piece(from, to)
         );
     }
@@ -222,7 +246,11 @@ mod tests {
         let (from, to) = (Position { x: 4, y: 4 }, Position { x: 4, y: 2 });
 
         assert_eq!(
-            Err(SpacesInvolvedNotCorrect(INVALID_MOVE_MESSAGE)),
+            Err(SpacesInvolvedNotCorrect(
+                INVALID_MOVE_MESSAGE,
+                board.clone(),
+                Move { from, to }
+            )),
             board.move_piece(from, to)
         );
     }
@@ -243,7 +271,11 @@ mod tests {
         let (from, to) = (Position { x: 4, y: 4 }, Position { x: 4, y: 2 });
 
         assert_eq!(
-            Err(SpacesInvolvedNotCorrect(INVALID_MOVE_MESSAGE)),
+            Err(SpacesInvolvedNotCorrect(
+                INVALID_MOVE_MESSAGE,
+                board.clone(),
+                Move { from, to }
+            )),
             board.move_piece(from, to)
         );
     }
