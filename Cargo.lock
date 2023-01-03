@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "resta-um"
+name = "peg-solitaire"
 version = "0.1.0"

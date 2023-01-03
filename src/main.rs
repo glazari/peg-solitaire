@@ -11,6 +11,7 @@ use crate::board::Board;
 use crate::position::Position;
 use crate::solver::Solver;
 use crate::stdout_render::print_board;
+use std::time::Duration;
 use std::time::Instant;
 
 fn main() {
@@ -43,14 +44,21 @@ fn main() {
 
     let mut solver = Solver::new();
 
-    let start = Instant::now();
-    let moves = solver.solve().expect("has solution");
-    let elapsed = start.elapsed();
-    let mut board = Board::new();
-    for m in moves {
-        print_board(&board);
-        board = board.move_piece(m.from, m.to).expect("valid movement");
+    let board = Board::new();
+    let mut count = 0;
+    let mut sum = Duration::new(0, 0);
+    for _i in 1..1000 {
+        let start = Instant::now();
+        let moves = solver.solve().expect("has solution");
+        let elapsed = start.elapsed();
+        count += 1;
+        sum += elapsed;
+        println!("Time elapsed: {:.2?}, moves {}", elapsed, moves.len());
     }
+    //for m in moves {
+    //    print_board(&board);
+    //    board = board.move_piece(m.from, m.to).expect("valid movement");
+    // }
     print_board(&board);
-    println!("Time elapsed: {:.2?}", elapsed);
+    println!("Avg Time elapsed: {:.2?}", sum / count);
 }
