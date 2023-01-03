@@ -30,7 +30,7 @@ impl Solver {
         //println!("Enter board: {}", board.serialize());
         let moves = board.find_moves();
         if moves.len() == 0 && board.find_pieces().len() == 1 {
-            return Some(vec![]);
+            return Some(Vec::with_capacity(32));
         }
         self.count += 1;
         //println!("moves found:\n {:?}", moves);

@@ -34,3 +34,13 @@ Possible points of improvement:
 - creating vectors for moves: we know the max size is 31 moves, we could initialize with capacity set.
 
 Profiler shows lots time on `RawVec::reserve_for_push` and `raw_vec::finish_grow`
+
+
+## Optimization try 1: use Vec with capacity
+
+Adding some `Vec::with_capacity` instead of `vec![]` did help, especially in the find_pieces code. But it did not always help. Final best avg with this optimization was:
+```
+avg time 6.57ms 
+over 1000 solves of full board.
+commit of measurement: xxx
+```

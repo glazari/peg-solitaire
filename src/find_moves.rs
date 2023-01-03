@@ -7,8 +7,8 @@ use crate::position::Position;
 
 impl Board {
     pub fn find_moves(&self) -> Vec<Move> {
-        let mut moves = vec![];
         let pieces = self.find_pieces();
+        let mut moves = vec![];
         for piece in pieces.iter() {
             for neighbor in self.neighbors(*piece).iter() {
                 let m = Move {
@@ -24,7 +24,7 @@ impl Board {
     }
 
     fn neighbors(&self, p: Position) -> Vec<Position> {
-        let mut neighbors = vec![];
+        let mut neighbors = Vec::with_capacity(4);
         if p.x > 1 {
             neighbors.push(Position { x: p.x - 2, y: p.y });
         }
@@ -41,7 +41,7 @@ impl Board {
     }
 
     pub(crate) fn find_pieces(&self) -> Vec<Position> {
-        let mut pos = vec![];
+        let mut pos = Vec::with_capacity(16);
         for y in 0..7 {
             for x in 0..7 {
                 let p = Position { x, y };
